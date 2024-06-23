@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Lobotomy Corporation and Attach Debugger",
+            "type": "clr",
+            "request": "attach",
+            "processName": "LobotomyCorp.exe",
+            "preLaunchTask": "LaunchLobotomyCorp"
+        }
+    ]
+}

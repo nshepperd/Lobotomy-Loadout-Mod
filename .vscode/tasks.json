@@ -1,0 +1,28 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "dotnet",
+            "task": "build",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "label": "dotnet: build"
+        },
+        {
+            "label": "LaunchLobotomyCorp",
+            "type": "process",
+            "dependsOn": "dotnet: build",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy", "Bypass",
+                "-Command", "& {start-process 'steam://rungameid/568220'; while(-not (Get-Process LobotomyCorp -ErrorAction SilentlyContinue)) { Start-Sleep -Milliseconds 500 }; }"
+            ],
+            "isBackground": false,
+            "problemMatcher": []
+        }
+    ]
+}
