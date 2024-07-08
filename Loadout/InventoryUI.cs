@@ -8,47 +8,177 @@ using Harmony;
 using Inventory;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using Loadout;
+
+public class LoadoutButton : MonoBehaviour {
+    public Color SaveColor;
+    public Color LoadColor;
+    public Color NormalColor;
+    public Text Text;
+    public Image Frame;
+    public int loadoutSlot;
+    public InventoryUI inventoryUI;
+    public InventoryItemController controller;
+    public bool hovered;
+
+    public void Init() {
+        Frame.color = NormalColor;
+        Text.color = NormalColor;
+        Text.text = "Loadout " + loadoutSlot;
+        hovered = false;
+    }
+
+    public void Start() {
+        EventTrigger trigger = GetComponent<EventTrigger>();
+        EventTrigger.Entry entry = null;
+        entry = new EventTrigger.Entry{eventID = EventTriggerType.PointerClick};
+        entry.callback.AddListener((data) => { OnPointerClick((PointerEventData)data); });
+        trigger.triggers.Add(entry);
+        entry = new EventTrigger.Entry{eventID = EventTriggerType.PointerEnter};
+        entry.callback.AddListener((data) => { OnPointerEnter((PointerEventData)data); });
+        trigger.triggers.Add(entry);
+        entry = new EventTrigger.Entry{eventID = EventTriggerType.PointerExit};
+        entry.callback.AddListener((data) => { OnPointerExit((PointerEventData)data); });
+        trigger.triggers.Add(entry);
+    }
+
+    public void Update() {
+        if(hovered) {
+            SetHovered();
+        }
+    }
+
+    public void SetHovered() {
+        hovered = true;
+        if(Input.GetKey(KeyCode.LeftShift)) {
+            Frame.color = SaveColor;
+            Text.color = SaveColor;
+            Text.text = "Save";
+        } else {
+            Frame.color = LoadColor;
+            Text.color = LoadColor;
+            Text.text = "Load";
+        }
+    }
+
+    public void OnPointerClick(PointerEventData data) {
+        if(Input.GetKey(KeyCode.LeftShift)) {
+            Logging.Debug("Would save loadout " + loadoutSlot);
+            Harmony_Patch.loadoutManager.SaveLoadout(loadoutSlot, inventoryUI, controller);
+        } else {
+            Logging.Debug("Would load loadout " + loadoutSlot);
+            Harmony_Patch.loadoutManager.LoadLoadout(loadoutSlot, inventoryUI, controller);
+        }
+    }
+
+    public void OnPointerEnter(PointerEventData data) {
+        this.SetHovered();
+    }
+
+    public void OnPointerExit(PointerEventData data) {
+        this.Init();
+    }
+}
 
 [HarmonyPatch(typeof(Inventory.InventoryUI), nameof(InventoryUI.CreateWindow))]
 class InventoryUI_CreateWindow {
+    static GameObject makeText() {
+        GameObject textObj = new GameObject("CustomButton", typeof(RectTransform));
+        Text text = textObj.AddComponent<Text>();
+        FontLoadScript fontLoadScript = textObj.AddComponent<FontLoadScript>();
+        // text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        text.fontSize = 20;
+        text.alignment = TextAnchor.MiddleCenter;
+        fontLoadScript.neededType = FontType.SUBTITLE;
+        return textObj;
+    }
+
+    static void Setup() {
+        Transform activeControl = InventoryUI.CurrentWindow.transform.Find("Canvas").Find("ActiveControl"); // Canvas/ActiveControl, this seems to be the main inventory window
+
+        Transform itemInfoArea = activeControl.Find("ItemInfoArea");
+        InventoryItemController inventoryItemController = activeControl.gameObject.GetComponentInChildren<InventoryItemController>();
+        
+        GameObject zayin = itemInfoArea.Find("RankLabel").Find("Zayin").gameObject;
+        GameObject aleph = itemInfoArea.Find("RankLabel").Find("Aleph").gameObject;
+
+        // Create a new button
+        GameObject buttonObj = new GameObject("CustomButton", typeof(RectTransform));
+        Image buttonImage = buttonObj.AddComponent<Image>();
+        GameObject textObj = makeText();
+        Text buttonText = textObj.GetComponent<Text>();
+
+        // Set the button's parent to the itemInfoArea
+        buttonObj.transform.SetParent(itemInfoArea, false);
+        textObj.transform.SetParent(buttonObj.transform, false);
+
+        // Log rect transforms
+        Logging.Debug("ranklabel: " + PrintRectTransform(itemInfoArea.Find("RankLabel").gameObject.GetComponent<RectTransform>()));
+        Logging.Debug("zayin:" + PrintRectTransform(zayin.GetComponent<RectTransform>()));
+        LogGameObjectHierarchy(zayin, 4);
+
+        Logging.Debug("zayin colors (active): " + zayin.GetComponent<InventoryRankButton>().AreaColor);
+        Logging.Debug("zayin colors (normal): " + zayin.GetComponent<InventoryRankButton>().NormalColor);
+
+        Logging.Debug("font???");
+        // Copy Image
+        Image existingImage = zayin.GetComponent<Image>();
+        buttonImage.sprite = existingImage.sprite;
+        buttonImage.type = existingImage.type;
+
+        Logging.Debug("image: " + buttonImage.type);
+
+        LoadoutButton button = buttonObj.AddComponent<LoadoutButton>();
+        EventTrigger trigger = buttonObj.AddComponent<EventTrigger>();
+        button.LoadColor = zayin.GetComponent<InventoryRankButton>().AreaColor;
+        button.SaveColor = aleph.GetComponent<InventoryRankButton>().AreaColor;
+        button.NormalColor = zayin.GetComponent<InventoryRankButton>().NormalColor;
+        button.Text = buttonText;
+        button.Frame = buttonImage;
+        button.inventoryUI = InventoryUI.CurrentWindow;
+        button.controller = inventoryItemController;
+        button.loadoutSlot = 1;
+
+        Logging.Debug("button.Init()");
+
+        button.Init();
+
+        Logging.Debug("button.Init() done");
+
+        // Set size and position
+        RectTransform newRectTransform = buttonObj.GetComponent<RectTransform>();
+        newRectTransform.anchorMin = new Vector2(0.5f, 1.0f);
+        newRectTransform.anchorMax = new Vector2(0.5f, 1.0f);
+        newRectTransform.anchoredPosition = new Vector2(0.0f, 10.0f); //-1.0f, 171.4f + 129.8f);
+        newRectTransform.sizeDelta = new Vector2(121.0f, 45.0f);
+        newRectTransform.pivot = new Vector2(0.0f, 0.0f);
+
+        // Set text to full size of button.
+        RectTransform textRectTransform = textObj.GetComponent<RectTransform>();
+        textRectTransform.anchorMin = new Vector2(0.15f, 0.0f);
+        textRectTransform.anchorMax = new Vector2(1.0f, 1.0f);
+        textRectTransform.sizeDelta = new Vector2(0.0f, 0.0f);
+        textRectTransform.pivot = new Vector2(0.5f, 0.5f);
+        textRectTransform.anchoredPosition = new Vector2(0.0f, 0.0f);
+
+        // LogGameObjectHierarchy(activeControl.gameObject, 3);
+    }
+
     static void Postfix(ref InventoryUI __result) {
         // InventoryUI.CurrentWindow.gameObject
-        FileLog.Log("InventoryUI.CreateWindow()");
+        Logging.Debug("InventoryUI.CreateWindow()");
         try {
-            Transform activeControl = InventoryUI.CurrentWindow.transform.Find("Canvas").Find("ActiveControl"); // Canvas/ActiveControl, this seems to be the main inventory window
-            LogGameObjectHierarchy(activeControl.gameObject, 4);
-
-            Transform itemInfoArea = activeControl.Find("ItemInfoArea");
-            InventoryItemController inventoryItemController = activeControl.gameObject.GetComponentInChildren<InventoryItemController>();
-            
-            // Create a new button
-            GameObject buttonObj = new GameObject("CustomButton");
-            UnityEngine.UI.Button button = buttonObj.AddComponent<UnityEngine.UI.Button>();
-            UnityEngine.UI.Text buttonText = buttonObj.AddComponent<UnityEngine.UI.Text>();
-
-            // Set the button's parent to the InventoryUI
-            buttonObj.transform.SetParent(itemInfoArea, false);
-
-            // Position and style the button
-            RectTransform rectTransform = buttonObj.GetComponent<RectTransform>();
-            rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-            rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-            rectTransform.anchoredPosition = new Vector2(0, 0);
-            rectTransform.sizeDelta = new Vector2(160, 30);
-
-            // Style the button text
-            buttonText.text = "Custom Button";
-            buttonText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            buttonText.alignment = TextAnchor.MiddleCenter;
-            buttonText.color = Color.white;
-
-            // Add click event listener
-            button.onClick.AddListener(() => OnCustomButtonClick());
-
-            // LogGameObjectHierarchy(activeControl.gameObject, 3);
+            if (InventoryUI.CurrentWindow.gameObject.GetComponentInChildren<LoadoutButton>() == null) {
+                Setup();
+            }
         } catch (Exception e) {
-            FileLog.Log("Exception: " + e.Message + " at " + e.StackTrace);
+            Logging.Info("Exception:\n" + e.Message + "\n" + e.StackTrace);
         }
+    }
+
+    static string PrintRectTransform(RectTransform rectTransform) {
+        return $"RectTransform: {rectTransform.name}, AnchorMin: {rectTransform.anchorMin}, AnchorMax: {rectTransform.anchorMax}, AnchoredPosition: {rectTransform.anchoredPosition}, SizeDelta: {rectTransform.sizeDelta}, Pivot: {rectTransform.pivot}";
     }
 
     public static void LogGameObjectHierarchy(GameObject obj, int maxdepth, string indent = "", bool includeComponents = true)
@@ -56,7 +186,7 @@ class InventoryUI_CreateWindow {
         if (maxdepth <= 0) return;
         if (obj == null) return;
 
-        FileLog.Log($"{indent}{obj.name}");
+        Logging.Debug($"{indent}{obj.name}");
 
         if (includeComponents)
         {
@@ -64,7 +194,7 @@ class InventoryUI_CreateWindow {
             foreach (Component component in components)
             {
                 if (component != null)
-                    FileLog.Log($"{indent}  - {component.GetType().Name}");
+                    Logging.Debug($"{indent}  - {component.GetType().Name}");
             }
         }
 
@@ -72,10 +202,5 @@ class InventoryUI_CreateWindow {
         {
             LogGameObjectHierarchy(child.gameObject, maxdepth-1, indent + "  ", includeComponents);
         }
-    }
-
-    static void OnCustomButtonClick() {
-        FileLog.Log("Custom button clicked!");
-        // Add your custom logic here
     }
 }

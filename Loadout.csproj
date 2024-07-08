@@ -15,10 +15,9 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <!-- <DebugType>full</DebugType> -->
-    <DebugType>portable</DebugType>
+    <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>D:\SteamLibrary\steamapps\common\LobotomyCorp\LobotomyCorp_Data\BaseMods\Loadout\</OutputPath>
+    <OutputPath>D:\SteamLibrary\steamapps\common\LobotomyCorp\LobotomyCorp_Data\BaseMods\Lobotomy.synthropy.Loadout\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -41,6 +40,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Loadout\Harmony_Patch.cs" />
+    <Compile Include="Loadout\FileManager.cs" />
+    <Compile Include="Loadout\Logging.cs" />
+    <Compile Include="Loadout\LoadoutManager.cs" />
     <Compile Include="Loadout\InventoryUI.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

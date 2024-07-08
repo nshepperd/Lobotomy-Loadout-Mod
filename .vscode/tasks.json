@@ -2,15 +2,32 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "type": "dotnet",
-            "task": "build",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": [],
-            "label": "dotnet: build"
+            "label": "build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/Loadout.sln",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary;ForceNoAlign"
+            ],
+            "problemMatcher": "$msCompile"
         },
+
+        {
+            "label": "dotnet build release",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/Loadout.sln",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary;ForceNoAlign",
+                "--configuration=Release"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        
         {
             "label": "LaunchLobotomyCorp",
             "type": "process",
