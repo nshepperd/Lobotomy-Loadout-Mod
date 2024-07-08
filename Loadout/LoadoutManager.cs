@@ -74,7 +74,7 @@ namespace Loadout {
                     return;
                 }
                 foreach(string line in loadout.Split('\n')) {
-                    FileLog.Log("line: " + line);
+                    FileLog.Log("line: " + line.Trim());
                     if (line.StartsWith("weapon|")) {
                         string[] parts = line.Trim().Split('|');
                         string weaponName = parts[1];

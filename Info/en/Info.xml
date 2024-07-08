@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<info>
+<name>Loadout Mod</name>
+<descs>
+<desc>Adds buttons to the equipment management screen to load</desc>
+<desc>and save your EGO loadout. Convenient for when you're using</desc>
+<desc>the memory repository a lot and it's annoying to reassign all</desc>
+<desc>your EGO every time.</desc>
+<desc>If EGO is lost in battle, or an agent cannot equip it due to their stats,</desc>
+<desc>it will simply be unassigned. Also, this mod identifies agents by name, so</desc>
+<desc>it will not work if you have multiple agents with the same name.</desc>
+</descs>
+</info>
